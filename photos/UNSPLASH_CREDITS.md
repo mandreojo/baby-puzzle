@@ -56,3 +56,18 @@
 - unsplash-gGM1asW6FNg.jpg — Photo by KK Ng on Unsplash — https://unsplash.com/photos/a-train-station-with-a-train-gGM1asW6FNg
 - unsplash-jBreXsQLE40.jpg — Photo by Michael Chambers on Unsplash — https://unsplash.com/photos/a-red-truck-is-driving-down-a-dirt-road-jBreXsQLE40
 - unsplash-pVsvjxJTUuo.jpg — Photo by Brendan Sapp on Unsplash — https://unsplash.com/photos/a-blue-truck-parked-on-the-side-of-the-road-pVsvjxJTUuo
+
+## 3차 보충 (2026-07-13)
+- unsplash-B5ids-3nMsI.jpg — Photo by Mehmet Keskin on Unsplash — https://unsplash.com/photos/an-apple-with-a-bite-taken-out-of-it-B5ids-3nMsI
+- unsplash-W5SmVgclb5c.jpg — Photo by Sandrine Bascouert on Unsplash — https://unsplash.com/photos/pineapple-W5SmVgclb5c
+- unsplash-ZMxHvB9J7YU.jpg — Photo by Bermix Studio on Unsplash — https://unsplash.com/photos/a-single-cherry-with-a-stem-on-a-white-background-ZMxHvB9J7YU
+- unsplash-a9ENF48HOQk.jpg — Photo by Mehmet Keskin on Unsplash — https://unsplash.com/photos/a-green-apple-sitting-on-top-of-a-white-table-a9ENF48HOQk
+- unsplash-biK3YJHhBfM.jpg — Photo by Mockup Graphics on Unsplash — https://unsplash.com/photos/red-apple-on-white-surface-biK3YJHhBfM
+- unsplash-fRD4cRj4PB4.jpg — Photo by Mockup Graphics on Unsplash — https://unsplash.com/photos/green-apple-fruit-on-white-background-fRD4cRj4PB4
+- unsplash-pjk4C9e-t5I.jpg — Photo by Daniel Imwinkelried on Unsplash — https://unsplash.com/photos/burned-fruit-pjk4C9e-t5I
+- unsplash-DuBNA1QMpPA.jpg — Photo by ian dooley on Unsplash — https://unsplash.com/photos/assorted-color-hot-air-balloons-during-daytime-DuBNA1QMpPA
+- unsplash-IbH4zvxsF7M.jpg — Photo by Cassio Nunes on Unsplash — https://unsplash.com/photos/gray-and-black-helicopter-in-mid-air-IbH4zvxsF7M
+- unsplash-PrdNTrIrG8w.jpg — Photo by John McArthur on Unsplash — https://unsplash.com/photos/gray-and-white-airplane-on-flight-near-clear-blue-sky-PrdNTrIrG8w
+- unsplash-QkqdmaehigM.jpg — Photo by Niklas Bischop on Unsplash — https://unsplash.com/photos/an-orange-helicopter-flying-through-a-cloudy-sky-QkqdmaehigM
+- unsplash-Tz5nmifbDkM.jpg — Photo by Gray Matter on Unsplash — https://unsplash.com/photos/airplane-in-the-sky-during-daytime-Tz5nmifbDkM
+- unsplash-h7wpIMY3O3E.jpg — Photo by Aaron Burden on Unsplash — https://unsplash.com/photos/panning-photography-of-flying-blue-yellow-and-red-hot-air-balloon-h7wpIMY3O3E
