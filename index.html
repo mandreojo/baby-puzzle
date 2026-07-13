@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon.svg">
-<link rel="stylesheet" href="css/style.css?v=2">
+<link rel="stylesheet" href="css/style.css?v=5">
 </head>
 <body>
 
@@ -47,12 +47,8 @@
     <button class="icon-btn" id="settings-btn" aria-label="설정">⚙️</button>
   </header>
 
-  <div class="category-bar" id="category-bar">
+  <div class="category-rail" id="category-bar">
     <!-- 카테고리 탭 : app.js가 채움 -->
-  </div>
-
-  <div class="difficulty-bar" id="difficulty-bar">
-    <!-- 조각 수 선택 (그림으로) : app.js가 채움 -->
   </div>
 
   <div class="photo-grid" id="photo-grid">
@@ -71,13 +67,16 @@
   </div>
 </section>
 
-<!-- 원본 미리보기 (스크램블 전에 "잘 봐두기") -->
+<!-- 원본 미리보기 + 난이도 선택 (스크램블 전에 "잘 봐두기") -->
 <div id="preview" class="hidden">
+  <button class="back-btn preview-back" id="preview-back" aria-label="뒤로">🏠</button>
   <div class="preview-card">
+    <div class="preview-hint">👀 이 그림으로 놀아요!</div>
     <div class="preview-photo-wrap"><img id="preview-img" alt=""></div>
-    <div class="preview-hint">👀 사진을 잘 봐요!</div>
-    <button class="big-btn start" id="preview-start">시작 ▶</button>
-    <div class="preview-count" id="preview-count"></div>
+    <div class="diff-picker" id="diff-picker" role="group" aria-label="조각 개수">
+      <!-- 난이도 버튼 : app.js가 채움 -->
+    </div>
+    <button class="big-btn start" id="preview-start">시작 <span class="start-arrow">▶</span></button>
   </div>
 </div>
 
@@ -158,6 +157,6 @@
   </div>
 </div>
 
-<script src="js/app.js?v=3"></script>
+<script src="js/app.js?v=5"></script>
 </body>
 </html>

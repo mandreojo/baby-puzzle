@@ -73,7 +73,11 @@ const Sound = (function(){
 /* ---------- DOM ---------- */
 const $=s=>document.querySelector(s);
 const screens={ home:$('#home'), game:$('#game'), win:$('#win') };
-function show(name){ Object.values(screens).forEach(s=>s.classList.add('hidden')); screens[name].classList.remove('hidden'); }
+function show(name){
+  Object.values(screens).forEach(s=>s.classList.add('hidden'));
+  const el=screens[name]; el.classList.remove('hidden');
+  el.classList.remove('screen-anim'); void el.offsetWidth; el.classList.add('screen-anim'); // 전환 페이드 재생
+}
 
 /* ---------- 상태 ---------- */
 let currentLevelIdx = LS.get('bp_level',0);
@@ -102,42 +106,42 @@ function saveBest(pi,lvkey,stars,sec){
 /* =========================================================
    홈 화면
    ========================================================= */
+// 이 사진의 전체 난이도 통틀어 최고 별(홈 카드 뱃지용)
+function bestAnyLevel(pi){
+  const all=LS.get('bp_best',{}); let mx=0;
+  LEVELS.forEach(lv=>{ const r=all[bestKey(pi,lv.key)]; if(r&&r.stars>mx) mx=r.stars; });
+  return mx;
+}
+
 function renderHome(){
   $('#plays-left').textContent = isPremium() ? '∞' : playsLeft();
-  // 난이도 칩
-  const bar=$('#difficulty-bar'); bar.innerHTML='';
-  LEVELS.forEach((lv,idx)=>{
-    const b=document.createElement('button');
-    b.className='diff-chip'+(idx===currentLevelIdx?' active':'');
-    const ico=document.createElement('div'); ico.className='grid-ico';
-    ico.style.gridTemplateColumns=`repeat(${lv.cols},1fr)`;
-    for(let i=0;i<lv.cols*lv.rows;i++){ ico.appendChild(document.createElement('i')); }
-    const lab=document.createElement('div'); lab.className='diff-label'; lab.textContent=lv.key+'조각';
-    b.appendChild(ico); b.appendChild(lab);
-    b.onclick=()=>{ Sound.tap(); currentLevelIdx=idx; LS.set('bp_level',idx); renderHome(); };
-    bar.appendChild(b);
-  });
-  // 카테고리 탭
+  // 카테고리 탭 (가로 레일)
   if(currentCatIdx>=CATS.length) currentCatIdx=0;
   const tabs=$('#category-bar'); tabs.innerHTML='';
   CATS.forEach((cat,idx)=>{
     const t=document.createElement('button');
     t.className='cat-tab'+(idx===currentCatIdx?' active':'');
     t.innerHTML=`<span class="cat-emoji">${cat.emoji}</span><span class="cat-name">${cat.name}</span>`;
-    t.onclick=()=>{ Sound.tap(); currentCatIdx=idx; LS.set('bp_cat',idx); renderHome(); };
+    t.onclick=()=>{ Sound.tap(); currentCatIdx=idx; LS.set('bp_cat',idx); renderHome();
+      requestAnimationFrame(()=>{ const a=tabs.querySelector('.cat-tab.active');
+        if(a) a.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'}); }); };
     tabs.appendChild(t);
   });
-  // 선택 카테고리 사진 카드
-  const lvKey=LEVELS[currentLevelIdx].key;
-  const grid=$('#photo-grid'); grid.innerHTML='';
-  (CATS[currentCatIdx].photos||[]).forEach(src=>{
+  // 선택 카테고리 사진 카드 (큰 카드 + 스켈레톤 + 순차 등장)
+  const grid=$('#photo-grid'); grid.innerHTML=''; grid.scrollTop=0;
+  (CATS[currentCatIdx].photos||[]).forEach((src,i)=>{
     const card=document.createElement('div'); card.className='photo-card';
-    const img=document.createElement('img'); img.src=src; img.alt=''; img.loading='lazy';
+    card.style.animationDelay=(Math.min(i,14)*0.045)+'s';
+    const img=document.createElement('img'); img.alt=''; img.loading='lazy';
+    const reveal=()=>card.classList.add('loaded');
+    img.onload=reveal; img.onerror=reveal;
+    img.src=src;
+    if(img.complete && img.naturalWidth) reveal();
     const ov=document.createElement('div'); ov.className='play-ico'; ov.textContent='▶️';
     card.appendChild(img); card.appendChild(ov);
-    const best=getBest(src, lvKey);           // 이 사진·난이도 최고 별
-    if(best){ const badge=document.createElement('div'); badge.className='best-badge';
-      badge.textContent='⭐'.repeat(best.stars); card.appendChild(badge); }
+    const stars=bestAnyLevel(src);            // 이 사진 최고 별(난이도 무관)
+    if(stars){ const badge=document.createElement('div'); badge.className='best-badge';
+      badge.textContent='⭐'.repeat(stars); card.appendChild(badge); }
     card.onclick=()=>startGameRequest(src);
     grid.appendChild(card);
   });
@@ -161,26 +165,52 @@ function startGameRequest(src){
   Sound.resume();
   lockLandscape();
   if(!canPlay()){ openPaywall(); return; }
-  if(!isPremium()) usePlay();
   currentSrc=src;
-  show('game');
-  // 스크램블 전에 원본을 잠깐 보여줌 → 확인하면 조각으로 흩어짐
-  showPreview(src, ()=> buildPuzzle(src, LEVELS[currentLevelIdx]));
+  showPreview(src);          // 미리보기에서 난이도 고르고 → 시작
 }
 
-/* 원본 미리보기: "잘 봐두기" → 시작 버튼 또는 3초 뒤 자동으로 스크램블 */
-function showPreview(src, done){
-  const ov=$('#preview'), img=$('#preview-img'), countEl=$('#preview-count');
+/* 난이도 메타(색·표기) — 쉬움→도전 */
+const DIFF_META=[
+  {word:'쉬움',   color:'var(--d1)'},
+  {word:'보통',   color:'var(--d2)'},
+  {word:'어려움', color:'var(--d3)'},
+  {word:'도전',   color:'var(--d4)'},
+];
+function renderDiffPicker(){
+  const pick=$('#diff-picker'); pick.innerHTML='';
+  LEVELS.forEach((lv,idx)=>{
+    const meta=DIFF_META[idx]||DIFF_META[0];
+    const b=document.createElement('button');
+    b.className='diff-btn'+(idx===currentLevelIdx?' active':'');
+    b.style.setProperty('--pick-color', meta.color);
+    const ico=document.createElement('div'); ico.className='grid-ico';
+    ico.style.gridTemplateColumns=`repeat(${lv.cols},1fr)`;
+    for(let i=0;i<lv.cols*lv.rows;i++) ico.appendChild(document.createElement('i'));
+    const word=document.createElement('div'); word.className='diff-word'; word.textContent=meta.word;
+    const sub=document.createElement('div');  sub.className='diff-sub';   sub.textContent=lv.key+'조각';
+    b.appendChild(ico); b.appendChild(word); b.appendChild(sub);
+    b.onclick=()=>{ Sound.tap(); currentLevelIdx=idx; LS.set('bp_level',idx); renderDiffPicker(); };
+    pick.appendChild(b);
+  });
+}
+
+/* 미리보기: "이 그림으로 놀자" 원본 보여주고 + 난이도 선택 → 시작하면 스크램블.
+   플레이 차감은 실제 시작할 때만(뒤로 나가면 차감 안 됨). */
+function showPreview(src){
+  const ov=$('#preview'), img=$('#preview-img');
   img.src=src;
+  renderDiffPicker();
   ov.classList.remove('hidden');
-  let secs=3, timer=null, finished=false;
-  countEl.textContent=`${secs}초 후 시작`;
-  function tick(){ secs--; if(secs>0) countEl.textContent=`${secs}초 후 시작`; else go(); }
-  function startCount(){ timer=setInterval(tick,1000); }
-  function go(){ if(finished) return; finished=true; clearInterval(timer);
-    ov.classList.add('hidden'); done(); }
-  if(img.complete && img.naturalWidth) startCount(); else img.onload=startCount;
-  $('#preview-start').onclick=()=>{ Sound.tap(); go(); };
+  let done=false;
+  function start(){ if(done) return; done=true;
+    if(!isPremium()) usePlay();
+    ov.classList.add('hidden');
+    show('game');
+    buildPuzzle(src, LEVELS[currentLevelIdx]);
+  }
+  function back(){ if(done) return; done=true; ov.classList.add('hidden'); renderHome(); }
+  $('#preview-start').onclick=()=>{ Sound.tap(); start(); };
+  $('#preview-back').onclick =()=>{ Sound.tap(); back(); };
 }
 
 /* =========================================================
@@ -408,7 +438,12 @@ function trySnap(p){
     el.style.zIndex=5;                 // 완성된 조각은 아래로
     p.locked=true;
     Sound.snap();
-    el.animate([{transform:'scale(1.12)'},{transform:'scale(1)'}],{duration:180,easing:'ease-out'});
+    // 착! 붙는 손맛: 살짝 팝 + 황금빛 글로우 플래시
+    el.animate([
+      {transform:'scale(1.16)', filter:'drop-shadow(0 0 0 rgba(255,214,92,0))'},
+      {transform:'scale(1.04)', filter:'drop-shadow(0 0 16px rgba(255,206,80,.95))', offset:.35},
+      {transform:'scale(1)',    filter:'drop-shadow(0 0 0 rgba(255,214,92,0))'}
+    ],{duration:440,easing:'ease-out'});
     updateProgress();
     if(pieces.every(q=>q.locked)) setTimeout(winGame, 350);
   }
