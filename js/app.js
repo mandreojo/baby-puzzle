@@ -207,13 +207,16 @@ function layoutPuzzle(img, level){
   const cols=level.cols, rows=level.rows;
 
   const areaW=area.clientWidth, areaH=area.clientHeight;
-  const imgAspect=img.naturalWidth/img.naturalHeight;
+  // 사진 비율이 제각각(세로/가로)이라 보드를 사진에 맞추면 조각이 길쭉해지고 기기마다 달라짐.
+  // → 보드를 항상 4:3으로 고정하고, 사진은 4:3으로 cover-crop(비율유지·중앙크롭)해서 그림.
+  //   그리드·미리보기(둘 다 object-fit:cover 4:3)와 프레이밍이 일치하고 조각도 정사각형에 가까움.
+  const BOARD_ASPECT=4/3;
 
   // 보드는 화면 왼쪽에, 오른쪽은 조각 트레이
   const boardMaxW=areaW*0.56, boardMaxH=areaH*0.86;
   let boardW,boardH;
-  if(boardMaxW/boardMaxH > imgAspect){ boardH=boardMaxH; boardW=boardH*imgAspect; }
-  else { boardW=boardMaxW; boardH=boardW/imgAspect; }
+  if(boardMaxW/boardMaxH > BOARD_ASPECT){ boardH=boardMaxH; boardW=boardH*BOARD_ASPECT; }
+  else { boardW=boardMaxW; boardH=boardW/BOARD_ASPECT; }
   const boardLeft=Math.max(16, areaW*0.03);
   const boardTop=(areaH-boardH)/2;
   boardRect={left:boardLeft, top:boardTop, w:boardW, h:boardH};
@@ -308,8 +311,13 @@ function drawPiece(g, img, boardW, boardH, cellW, cellH, tab, c, r, edges){
   g.save();
   tracePiecePath(g, cellW, cellH, tab, edges);
   g.clip();
-  // 전체 보드 크기 이미지를, 이 셀이 (tab,tab)에 오도록 오프셋해서 그림
-  g.drawImage(img, 0,0,img.naturalWidth,img.naturalHeight,
+  // 사진을 보드 비율(=boardW/boardH)로 cover-crop: 비율 유지한 채 중앙 크롭 → 늘어남 없음.
+  const targetA=boardW/boardH, iw=img.naturalWidth, ih=img.naturalHeight, ia=iw/ih;
+  let sx,sy,sw,sh;
+  if(ia>targetA){ sh=ih; sw=ih*targetA; sx=(iw-sw)/2; sy=0; }   // 사진이 더 넓음 → 좌우 크롭
+  else         { sw=iw; sh=iw/targetA; sx=0; sy=(ih-sh)/2; }    // 사진이 더 높음 → 상하 크롭
+  // 크롭된 소스영역을 보드 전체크기로 그리고, 이 셀이 (tab,tab)에 오도록 오프셋
+  g.drawImage(img, sx,sy,sw,sh,
               tab - c*cellW, tab - r*cellH, boardW, boardH);
   g.restore();
   // 외곽선 (조각 구분)
