@@ -1,0 +1,13 @@
+{
+  "name": "아기 퍼즐",
+  "short_name": "아기 퍼즐",
+  "description": "3살 아이를 위한 사진 직소 퍼즐",
+  "start_url": "./index.html",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#ffd6e8",
+  "theme_color": "#ffd6e8",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

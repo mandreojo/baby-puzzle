@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#ffd6e8">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<title>아기 퍼즐</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="stylesheet" href="css/style.css?v=2">
+</head>
+<body>
+
+<!-- 배경 장식: 둥둥 떠다니는 파스텔 요소 (아이 방해 안 되게 은은하게) -->
+<div id="decor" aria-hidden="true">
+  <span class="deco blob b1"></span>
+  <span class="deco blob b2"></span>
+  <span class="deco blob b3"></span>
+  <span class="deco blob b4"></span>
+  <span class="deco emo e1">☁️</span>
+  <span class="deco emo e2">⭐</span>
+  <span class="deco emo e3">🎈</span>
+  <span class="deco emo e4">🦋</span>
+  <span class="deco emo e5">🌸</span>
+  <span class="deco emo e6">🌈</span>
+</div>
+
+<!-- 세로일 때: 가로로 돌려달라는 안내 -->
+<div id="rotate-overlay">
+  <div class="rotate-inner">
+    <div class="rotate-phone">📱</div>
+    <div class="rotate-text">화면을 옆으로 돌려요</div>
+  </div>
+</div>
+
+<!-- 홈 화면 -->
+<section id="home" class="screen">
+  <header class="home-top">
+    <div class="plays-badge" id="plays-badge" title="오늘 남은 무료 플레이">
+      <span class="star">⭐</span><span id="plays-left">10</span>
+    </div>
+    <div class="home-title">아기 퍼즐</div>
+    <button class="icon-btn" id="settings-btn" aria-label="설정">⚙️</button>
+  </header>
+
+  <div class="category-bar" id="category-bar">
+    <!-- 카테고리 탭 : app.js가 채움 -->
+  </div>
+
+  <div class="difficulty-bar" id="difficulty-bar">
+    <!-- 조각 수 선택 (그림으로) : app.js가 채움 -->
+  </div>
+
+  <div class="photo-grid" id="photo-grid">
+    <!-- 사진 카드: app.js가 채움 -->
+  </div>
+</section>
+
+<!-- 게임 화면 -->
+<section id="game" class="screen hidden">
+  <button class="back-btn" id="back-btn" aria-label="집으로">🏠</button>
+  <div class="game-progress" id="game-progress"></div>
+  <div class="game-timer" id="game-timer"></div>
+  <div id="play-area">
+    <div id="board"></div>
+    <!-- 조각 canvas들이 여기에 추가됨 -->
+  </div>
+</section>
+
+<!-- 원본 미리보기 (스크램블 전에 "잘 봐두기") -->
+<div id="preview" class="hidden">
+  <div class="preview-card">
+    <div class="preview-photo-wrap"><img id="preview-img" alt=""></div>
+    <div class="preview-hint">👀 사진을 잘 봐요!</div>
+    <button class="big-btn start" id="preview-start">시작 ▶</button>
+    <div class="preview-count" id="preview-count"></div>
+  </div>
+</div>
+
+<!-- 완성 축하 화면 -->
+<section id="win" class="screen hidden">
+  <div class="confetti" id="confetti"></div>
+  <div class="win-card">
+    <div class="win-photo-wrap"><img id="win-photo" alt=""></div>
+    <div class="win-stars" id="win-stars"></div>
+    <div class="win-time" id="win-time"></div>
+    <div class="win-record" id="win-record"></div>
+    <div class="win-buttons">
+      <button class="big-btn home" id="win-home">🏠 처음으로</button>
+      <button class="big-btn again" id="win-again">🔄 또 하기</button>
+      <button class="big-btn next" id="win-next">➡️ 다음</button>
+    </div>
+  </div>
+</section>
+
+<!-- 결제(부모 게이트) 모달 -->
+<div id="paywall" class="modal hidden">
+  <div class="modal-card">
+    <!-- 부모 확인 단계 -->
+    <div id="gate-step">
+      <div class="gate-title">부모님 확인이 필요해요</div>
+      <div class="gate-sub">아래 숫자를 순서대로 눌러주세요</div>
+      <div class="gate-target" id="gate-target">3 · 7 · 1</div>
+      <div class="gate-pad" id="gate-pad"></div>
+      <div class="gate-progress" id="gate-progress"></div>
+      <button class="text-btn" data-close-paywall>닫기</button>
+    </div>
+    <!-- 결제 단계 -->
+    <div id="pay-step" class="hidden">
+      <div class="gate-title">오늘 무료 플레이를 다 했어요</div>
+      <div class="gate-sub">계속 놀려면 이용권을 구매해주세요</div>
+      <div class="plans">
+        <button class="plan" data-plan="day">
+          <div class="plan-name">하루권</div>
+          <div class="plan-price">₩500</div>
+          <div class="plan-note">오늘 하루 무제한</div>
+        </button>
+        <button class="plan best" data-plan="month">
+          <div class="plan-badge">인기</div>
+          <div class="plan-name">한달권</div>
+          <div class="plan-price">₩10,000</div>
+          <div class="plan-note">30일 무제한</div>
+        </button>
+        <button class="plan" data-plan="year">
+          <div class="plan-name">일년권</div>
+          <div class="plan-price">₩30,000</div>
+          <div class="plan-note">365일 무제한</div>
+        </button>
+      </div>
+      <div class="restore-row">
+        <button class="text-btn" id="restore-btn">구매 복원</button>
+        <button class="text-btn" data-close-paywall>닫기</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 설정(부모 게이트) 모달 -->
+<div id="settings" class="modal hidden">
+  <div class="modal-card">
+    <div class="gate-title">설정</div>
+    <div class="setting-row">
+      <span>소리</span>
+      <button class="toggle" id="sound-toggle" aria-pressed="true">켜짐</button>
+    </div>
+    <div class="setting-row">
+      <span>이용 상태</span>
+      <span id="premium-status" class="status-text">무료</span>
+    </div>
+    <div class="setting-row small">
+      <span id="reset-note"></span>
+    </div>
+    <button class="text-btn" data-close-settings>닫기</button>
+  </div>
+</div>
+
+<script src="js/app.js?v=2"></script>
+</body>
+</html>

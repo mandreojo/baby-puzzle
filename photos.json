@@ -1,0 +1,72 @@
+{
+  "categories": [
+    {
+      "key": "animals",
+      "name": "동물",
+      "emoji": "🐾",
+      "photos": [
+        "photos/animals/unsplash-0mMkEV0hMk4.jpg",
+        "photos/animals/unsplash-3CCt4DcycWA.jpg",
+        "photos/animals/unsplash-7AIDE8PrvA0.jpg",
+        "photos/animals/unsplash-9gz3wfHr65U.jpg",
+        "photos/animals/unsplash--TtDXCezTCs.jpg",
+        "photos/animals/unsplash-AbNO2iejoXA.jpg",
+        "photos/animals/unsplash-Ak81Vc-kCf4.jpg",
+        "photos/animals/unsplash-atOlntWcO4k.jpg",
+        "photos/animals/unsplash-IN4rPvXWr3Q.jpg",
+        "photos/animals/unsplash-kfR-bCXblkw.jpg",
+        "photos/animals/unsplash-LU0JYJOF93M.jpg",
+        "photos/animals/unsplash-nKC772R_qog.jpg",
+        "photos/animals/unsplash-NVXY8_M1n40.jpg",
+        "photos/animals/unsplash-OOUlnUvZniU.jpg",
+        "photos/animals/unsplash-P7L5011nD5s.jpg",
+        "photos/animals/unsplash-PiEcZXGXFuU.jpg",
+        "photos/animals/unsplash-QJbyG6O0ick.jpg",
+        "photos/animals/unsplash-u_kMWN-BWyU.jpg",
+        "photos/animals/unsplash-v70YPgxPB7g.jpg",
+        "photos/animals/unsplash-zXunvWE06IE.jpg"
+      ]
+    },
+    {
+      "key": "fruits",
+      "name": "과일",
+      "emoji": "🍓",
+      "photos": [
+        "photos/fruits/unsplash-1ROcVsA8UYA.jpg",
+        "photos/fruits/unsplash-7YFfGE26kbs.jpg",
+        "photos/fruits/unsplash-A4BBdJQu2co.jpg",
+        "photos/fruits/unsplash-atzWFItRHy8.jpg",
+        "photos/fruits/unsplash-drzu0uPgmoU.jpg",
+        "photos/fruits/unsplash-ezSFnAFi9hY.jpg",
+        "photos/fruits/unsplash-FCrgmqqvl-w.jpg",
+        "photos/fruits/unsplash-fczCr7MdE7U.jpg",
+        "photos/fruits/unsplash-izi5AnlbRIA.jpg",
+        "photos/fruits/unsplash-K0efSg5xy9w.jpg",
+        "photos/fruits/unsplash-NMkWw9Hq9Sg.jpg",
+        "photos/fruits/unsplash-oWN1tKuUpJI.jpg",
+        "photos/fruits/unsplash-qPBKEyJbyS8.jpg"
+      ]
+    },
+    {
+      "key": "vehicles",
+      "name": "탈것",
+      "emoji": "🚗",
+      "photos": [
+        "photos/vehicles/unsplash-4H_I-HRjkyA.jpg",
+        "photos/vehicles/unsplash-6DnSGv4VZlo.jpg",
+        "photos/vehicles/unsplash-6QzfieA1X2A.jpg",
+        "photos/vehicles/unsplash--UIGTQAH5OA.jpg",
+        "photos/vehicles/unsplash-gGM1asW6FNg.jpg",
+        "photos/vehicles/unsplash-HVoco6yUXCU.jpg",
+        "photos/vehicles/unsplash-jBreXsQLE40.jpg",
+        "photos/vehicles/unsplash-jfzxy94VV-Y.jpg",
+        "photos/vehicles/unsplash-K6zeywnjHtQ.jpg",
+        "photos/vehicles/unsplash-maVHoAWycOs.jpg",
+        "photos/vehicles/unsplash-pVsvjxJTUuo.jpg",
+        "photos/vehicles/unsplash-Qn7bJt56sGY.jpg",
+        "photos/vehicles/unsplash-rWR9LvWFoBE.jpg",
+        "photos/vehicles/unsplash-sJmp4blGjLU.jpg"
+      ]
+    }
+  ]
+}
