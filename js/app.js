@@ -8,14 +8,18 @@
 
 /* ---------- 설정 ---------- */
 // 사진 카테고리는 photos.json에서 로드(build-photos.py가 생성). 로드 실패 시 아래 fallback.
-const FALLBACK_CATS = [{ key:'family', name:'우리 아기', emoji:'👶',
-  photos: Array.from({length:16},(_,i)=>`photos/family/${i+1}.jpg`) }];
+const FALLBACK_CATS = [{ key:'animals', name:'동물', emoji:'🐾',
+  photos: Array.from({length:15},(_,i)=>`photos/animals/trip-${String(i+1).padStart(2,'0')}.jpg`) }];
 let CATS = FALLBACK_CATS;
 const FREE_PER_DAY = 10;
-// 난이도: [cols, rows] — 4:3 사진이라 조각이 정사각형에 가깝게. 6~24조각.
+// 난이도: [cols, rows] — 4:3 사진이라 조각이 정사각형에 가깝게. 4~24조각.
 // s3/s2 = 별3개/별2개를 받는 완료시간(초) 상한. 난이도(조각수)별로 차등.
+// ghost=보드에 그림을 옅게 비쳐 "그림 위에 얹기" 힌트(어린 아이용). notime=타이머/별압박 제거(최하 난이도).
+// ⚠️ 나이 커버: 만 2~3세는 '아기'(4조각·그림힌트·타이머없음)가 바닥, 만 5~6세는 '도전'(24조각·빈보드).
+//   부모가 난이도만 고르면 힌트/압박이 자동으로 나이에 맞춰짐 — 별도 설정 불필요.
 const LEVELS = [
-  {key:'6',  cols:3, rows:2, label:'쉬움',  s3:30,  s2:60},
+  {key:'4',  cols:2, rows:2, label:'아기',  s3:9999,s2:9999, ghost:true, notime:true},
+  {key:'6',  cols:3, rows:2, label:'쉬움',  s3:30,  s2:60,   ghost:true},
   {key:'12', cols:4, rows:3, label:'보통',  s3:75,  s2:150},
   {key:'20', cols:5, rows:4, label:'어려움', s3:150, s2:300},
   {key:'24', cols:6, rows:4, label:'도전',  s3:200, s2:400},
@@ -86,7 +90,14 @@ let currentSrc = '';   // 현재 퍼즐 사진 경로 (best 기록 키로도 사
 
 /* ---------- 타이머 ---------- */
 let gameStart=0, timerInt=null;
-function startTimer(){ gameStart=Date.now(); clearInterval(timerInt); timerInt=setInterval(updateTimer,500); updateTimer(); }
+function startTimer(){
+  gameStart=Date.now(); clearInterval(timerInt);
+  // '아기' 난이도는 타이머/별 압박 없음 — 두돌 아기에겐 스톱워치·랭킹이 무의미하고 부담만.
+  const noTime=LEVELS[currentLevelIdx] && LEVELS[currentLevelIdx].notime;
+  const el=$('#game-timer'); if(el) el.style.display=noTime?'none':'';
+  if(noTime){ return; }
+  timerInt=setInterval(updateTimer,500); updateTimer();
+}
 function stopTimer(){ clearInterval(timerInt); timerInt=null; }
 function elapsedSec(){ return (Date.now()-gameStart)/1000; }
 function fmtTime(s){ s=Math.floor(s); return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`; }
@@ -171,6 +182,7 @@ function startGameRequest(src){
 
 /* 난이도 메타(색·표기) — 쉬움→도전 */
 const DIFF_META=[
+  {word:'아기',   color:'var(--d0)'},
   {word:'쉬움',   color:'var(--d1)'},
   {word:'보통',   color:'var(--d2)'},
   {word:'어려움', color:'var(--d3)'},
@@ -222,7 +234,7 @@ function buildPuzzle(src, level){
   const area=$('#play-area');
   // 기존 조각 제거
   area.querySelectorAll('.piece').forEach(p=>p.remove());
-  pieces=[];
+  pieces=[]; clearHintTimer();
   $('#game-progress').textContent='';
 
   const img=new Image();
@@ -254,13 +266,20 @@ function layoutPuzzle(img, level){
   Object.assign(boardEl.style,{ left:boardLeft+'px', top:boardTop+'px', width:boardW+'px', height:boardH+'px' });
 
   const cellW=boardW/cols, cellH=boardH/rows;
-  // 보드는 빈칸(답 노출 X). 어디 놓을지 감만 주는 옅은 격자선만 표시.
+  // 보드 격자선(어디 놓을지 감만 주는 옅은 선).
   boardEl.style.backgroundColor='#fff6fb';
   boardEl.style.backgroundImage=
     'linear-gradient(to right, rgba(224,143,180,.20) 1px, transparent 1px),'+
     'linear-gradient(to bottom, rgba(224,143,180,.20) 1px, transparent 1px)';
   boardEl.style.backgroundSize=`${cellW}px ${cellH}px`;
   boardEl.style.backgroundPosition='0 0';
+  // 그림 힌트(고스트): 쉬운 난이도(만 2~4세)에선 정답 그림을 옅게 비쳐 "그림 위에 얹기"를 돕는다.
+  //   어려운 난이도(만 5~6세 도전)는 빈 보드 유지 → 기억·공간추론 훈련. 난이도가 곧 나이별 스캐폴딩.
+  let ghost=boardEl.querySelector('.board-ghost');
+  if(level.ghost){
+    if(!ghost){ ghost=document.createElement('img'); ghost.className='board-ghost'; ghost.alt=''; boardEl.appendChild(ghost); }
+    ghost.src=img.src;
+  } else if(ghost){ ghost.remove(); }
   const tab=Math.min(cellW,cellH)*0.24;             // knob 크기 = canvas 패딩
   const dpr=Math.min(window.devicePixelRatio||1, 2);
 
@@ -312,6 +331,7 @@ function layoutPuzzle(img, level){
   }
   updateProgress();
   startTimer();
+  scheduleHint();   // 한동안 진전 없으면 힌트
 }
 
 /* 트레이 흩뿌림 위치 생성 (겹침 최소화하는 지터 그리드) */
@@ -405,6 +425,7 @@ function attachDrag(p){
     el.classList.add('dragging');
     el.style.zIndex=1000;
     bringHelp(el);
+    scheduleHint();   // 아이가 만지는 중 → 힌트 타이머 리셋
     Sound.pick();
     e.preventDefault();
   });
@@ -424,6 +445,35 @@ function attachDrag(p){
 }
 let helpZ=500;
 function bringHelp(el){ el.style.zIndex=++helpZ; }
+
+/* ---------- 안 막힘 넛지 (실패 없음 → 막히지도 않음) ----------
+   아이가 한동안 조각을 못 맞추면(진전 없음) 조각 하나를 살짝 흔들고
+   그 자리를 반짝여 "여기야" 하고 부드럽게 알려준다. 압박 없이 힌트만. */
+let hintTimer=null;
+function hintRing(){
+  let r=$('#hint-ring');
+  if(!r){ r=document.createElement('div'); r.id='hint-ring'; $('#play-area').appendChild(r); }
+  return r;
+}
+function hideHint(){ const r=$('#hint-ring'); if(r) r.classList.remove('show'); }
+function clearHintTimer(){ clearTimeout(hintTimer); hintTimer=null; hideHint(); }
+function scheduleHint(delay){ clearTimeout(hintTimer); hideHint(); hintTimer=setTimeout(fireHint, delay||9000); }
+function fireHint(){
+  if(screens.game.classList.contains('hidden')) return;
+  const rem=pieces.filter(p=>!p.locked);
+  if(!rem.length) return;
+  const p=rem[Math.floor(Math.random()*rem.length)];
+  // 조각 부드럽게 흔들기
+  try{ p.el.animate([
+    {transform:'rotate(0)'},{transform:'rotate(-5deg)'},{transform:'rotate(5deg)'},
+    {transform:'rotate(-4deg)'},{transform:'rotate(0)'}
+  ],{duration:800,easing:'ease-in-out'}); }catch(e){}
+  // 그 조각이 갈 자리(정답 셀)를 반짝
+  const r=hintRing();
+  Object.assign(r.style,{ left:p.homeX+'px', top:p.homeY+'px', width:p.w+'px', height:p.h+'px' });
+  r.classList.remove('show'); void r.offsetWidth; r.classList.add('show');
+  scheduleHint(13000);   // 계속 막히면 다시(간격 넉넉히)
+}
 
 function trySnap(p){
   const el=p.el;
@@ -445,7 +495,8 @@ function trySnap(p){
       {transform:'scale(1)',    filter:'drop-shadow(0 0 0 rgba(255,214,92,0))'}
     ],{duration:440,easing:'ease-out'});
     updateProgress();
-    if(pieces.every(q=>q.locked)) setTimeout(winGame, 350);
+    if(pieces.every(q=>q.locked)){ clearHintTimer(); setTimeout(winGame, 350); }
+    else scheduleHint();   // 한 조각 맞췄으니 힌트 타이머 리셋
   }
 }
 
@@ -466,9 +517,15 @@ function winGame(){
   Sound.win();
   $('#win-photo').src=currentSrc;
   renderStars(stars);
-  $('#win-time').textContent='⏱ '+fmtTime(sec);
-  const best=getBest(currentSrc, level.key);
-  $('#win-record').textContent = isNew ? '🎉 신기록!' : `최고 ${'⭐'.repeat(best.stars)} · ${fmtTime(best.sec)}`;
+  if(level.notime){
+    // '아기' 난이도: 시간·기록 없이 칭찬만. 완주 자체가 성취.
+    $('#win-time').textContent='';
+    $('#win-record').textContent='🎉 잘했어요!';
+  } else {
+    $('#win-time').textContent='⏱ '+fmtTime(sec);
+    const best=getBest(currentSrc, level.key);
+    $('#win-record').textContent = isNew ? '🎉 신기록!' : `최고 ${'⭐'.repeat(best.stars)} · ${fmtTime(best.sec)}`;
+  }
   spawnConfetti();
   show('win');
 }
@@ -570,7 +627,7 @@ function alertToast(msg){
 /* =========================================================
    이벤트 바인딩
    ========================================================= */
-$('#back-btn').onclick=()=>{ Sound.tap(); stopTimer(); show('home'); renderHome(); };
+$('#back-btn').onclick=()=>{ Sound.tap(); stopTimer(); clearHintTimer(); show('home'); renderHome(); };
 $('#win-home').onclick=()=>{ Sound.tap(); show('home'); renderHome(); };
 $('#win-again').onclick=()=>{ Sound.tap(); startGameRequest(currentSrc); };
 $('#win-next').onclick=()=>{ Sound.tap();

@@ -19,8 +19,8 @@
   --grad-purple:linear-gradient(135deg,#d9c6ff,#b79bff);
   --grad-mint:linear-gradient(135deg,#a9f0e0,#74dcc4);
   --grad-sun:linear-gradient(135deg,#ffe6a0,#ffcf5c);
-  /* 난이도 색 (쉬움→도전) */
-  --d1:#7ed9b8; --d2:#8ec5ff; --d3:#ffc46b; --d4:#ff9ec4;
+  /* 난이도 색 (아기→도전) */
+  --d0:#ffd08a; --d1:#7ed9b8; --d2:#8ec5ff; --d3:#ffc46b; --d4:#ff9ec4;
   /* 라운드 & 그림자 스케일 */
   --r-card:26px; --r-pill:999px;
   --shadow-card:0 8px 22px rgba(200,90,140,.16), 0 2px 6px rgba(200,90,140,.10);
@@ -196,9 +196,31 @@ img{ -webkit-user-drag:none; user-drag:none; }
 }
 #play-area{ position:absolute;inset:0; }
 #board{
-  position:absolute;border-radius:10px;
+  position:absolute;border-radius:10px;overflow:hidden;
   box-shadow:inset 0 0 0 3px var(--board-line), 0 8px 24px rgba(180,90,140,.15);
   background-size:cover;background-position:center;
+}
+/* 그림 힌트(고스트): 쉬운 난이도에서 정답 그림을 옅게 비침. 살짝 흐리게 해서
+   "이미 다 맞춰진 그림"이 아니라 "여기에 얹으면 돼" 하는 안내로 읽히게. */
+.board-ghost{
+  position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;pointer-events:none;z-index:0;
+  opacity:.42;filter:saturate(.8);
+}
+/* 안 막힘 넛지: 조각이 갈 자리를 반짝이는 링 */
+#hint-ring{
+  position:absolute;z-index:8;pointer-events:none;
+  border:5px solid #ffd15c;border-radius:12px;
+  box-shadow:0 0 0 4px rgba(255,209,92,.35), 0 0 22px rgba(255,193,60,.7);
+  opacity:0;
+}
+#hint-ring.show{ animation:hintpulse 2.2s ease-out; }
+@keyframes hintpulse{
+  0%{opacity:0;transform:scale(1.14)}
+  15%{opacity:1;transform:scale(1)}
+  40%{opacity:.7;transform:scale(1.05)}
+  60%{opacity:1;transform:scale(1)}
+  100%{opacity:0;transform:scale(1)}
 }
 .piece{ position:absolute;cursor:grab;touch-action:none;
   transition:box-shadow .12s; }
