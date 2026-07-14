@@ -471,7 +471,7 @@ function attachDrag(p){
     if(!dragging) return; dragging=false;
     el.classList.remove('dragging');
     try{ el.releasePointerCapture(pid); }catch(e){}
-    trySnap(p);
+    trySnap(p);   // 반드시 드래그해서 제자리 근처에 놓아야 맞춰짐(퍼즐 본질 유지)
   }
   el.addEventListener('pointerup',end);
   el.addEventListener('pointercancel',end);
@@ -514,23 +514,24 @@ function trySnap(p){
   const cellMin=Math.min(boardRect.w/ LEVELS[currentLevelIdx].cols, boardRect.h/LEVELS[currentLevelIdx].rows);
   const thresh=cellMin*SNAP_RATIO;
   const dist=Math.hypot(x-p.homeX, y-p.homeY);
-  if(dist<=thresh){
-    // 착 붙음
-    el.style.left=p.homeX+'px'; el.style.top=p.homeY+'px';
-    el.classList.add('locked');
-    el.style.zIndex=5;                 // 완성된 조각은 아래로
-    p.locked=true;
-    Sound.snap();
-    // 착! 붙는 손맛: 살짝 팝 + 황금빛 글로우 플래시
-    el.animate([
-      {transform:'scale(1.16)', filter:'drop-shadow(0 0 0 rgba(255,214,92,0))'},
-      {transform:'scale(1.04)', filter:'drop-shadow(0 0 16px rgba(255,206,80,.95))', offset:.35},
-      {transform:'scale(1)',    filter:'drop-shadow(0 0 0 rgba(255,214,92,0))'}
-    ],{duration:440,easing:'ease-out'});
-    updateProgress();
-    if(pieces.every(q=>q.locked)){ clearHintTimer(); setTimeout(winGame, 350); }
-    else { Sound.sayEncourage(); scheduleHint(); }   // 가끔 칭찬 + 힌트 타이머 리셋
-  }
+  if(dist<=thresh) lockPiece(p);   // 근처에 놓으면 제자리에 착
+}
+
+/* 조각을 제자리(home)에 고정 + 손맛(팝·글로우·소리·칭찬·진행) */
+function lockPiece(p){
+  const el=p.el;
+  el.style.left=p.homeX+'px'; el.style.top=p.homeY+'px';
+  el.classList.add('locked'); el.style.zIndex=5; p.locked=true;
+  Sound.snap();
+  // 착! 붙는 손맛: 살짝 팝 + 황금빛 글로우 플래시
+  el.animate([
+    {transform:'scale(1.16)', filter:'drop-shadow(0 0 0 rgba(255,214,92,0))'},
+    {transform:'scale(1.04)', filter:'drop-shadow(0 0 16px rgba(255,206,80,.95))', offset:.35},
+    {transform:'scale(1)',    filter:'drop-shadow(0 0 0 rgba(255,214,92,0))'}
+  ],{duration:440,easing:'ease-out'});
+  updateProgress();
+  if(pieces.every(q=>q.locked)){ clearHintTimer(); setTimeout(winGame, 350); }
+  else { Sound.sayEncourage(); scheduleHint(); }   // 가끔 칭찬 + 힌트 타이머 리셋
 }
 
 function updateProgress(){
@@ -681,6 +682,26 @@ $('#restore-btn').onclick=()=>{ // 목업 복원
 document.querySelectorAll('[data-close-paywall]').forEach(b=>b.onclick=closePaywall);
 document.querySelectorAll('[data-close-settings]').forEach(b=>b.onclick=()=>$('#settings').classList.add('hidden'));
 document.querySelectorAll('.plan').forEach(b=>b.onclick=()=>purchase(b.dataset.plan));
+
+/* =========================================================
+   뒤로가기(폰 하드웨어/제스처·브라우저) 가로채기
+   - 그냥 두면 퍼즐 중 뒤로가기 = 앱이 통째로 꺼짐(아이·부모 실수로 진행 다 날아감).
+   - 글 못 읽는 아이라 confirm 대화상자는 무의미 → 대신 "뒤로 = 한 단계만 닫고 그림고르기(홈)로".
+   - 홈에서 뒤로가기는 아무 일도 안 함(진행 중 퍼즐 없음). 진짜 종료는 폰 홈 제스처로.
+   ========================================================= */
+function armBack(){ try{ history.pushState({bp:1}, ''); }catch(e){} }
+function handleBack(){
+  // 열려있는 오버레이/화면을 위에서부터 하나만 닫고, 뒤로가기 함정 재장전(앱이 안 꺼지게).
+  if(!$('#preview').classList.contains('hidden')){ $('#preview-back').click(); armBack(); return; }
+  if(!$('#paywall').classList.contains('hidden')){ closePaywall(); armBack(); return; }
+  if(!$('#settings').classList.contains('hidden')){ $('#settings').classList.add('hidden'); armBack(); return; }
+  if(!screens.win.classList.contains('hidden')){ $('#win-home').click(); armBack(); return; }
+  if(!screens.game.classList.contains('hidden')){ $('#back-btn').click(); armBack(); return; }
+  // 홈: 그대로 있기(재장전만) → 뒤로가기로 실수로 앱이 꺼지지 않음.
+  armBack();
+}
+window.addEventListener('popstate', handleBack);
+armBack();
 
 // 게임 중 리사이즈/회전 시에만 퍼즐 재배치(재배치=진행중 조각 리셋됨).
 // ⚠️ 모바일에서 조각 드래그하면 주소창이 접혔다 펴지며 resize가 터지는데,
