@@ -136,9 +136,11 @@ img{ -webkit-user-drag:none; user-drag:none; }
 
 /* 사진 그리드 : 큰 카드, 반응형(기기 무관), 스켈레톤 */
 .photo-grid{
-  flex:1 1 auto;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;
-  display:grid;grid-template-columns:repeat(auto-fill, minmax(190px, 1fr));gap:18px;
-  padding:6px 20px calc(22px + env(safe-area-inset-bottom));align-content:start;
+  flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;
+  display:grid;grid-template-columns:repeat(auto-fill, minmax(190px, 1fr));
+  grid-auto-rows:max-content;   /* 행 높이를 카드 실제(4:3) 높이로 → 좁은 화면서 행 겹침 방지 */
+  gap:18px;align-content:start;
+  padding:6px 20px calc(22px + env(safe-area-inset-bottom));
 }
 .photo-grid::-webkit-scrollbar{ width:9px; }
 .photo-grid::-webkit-scrollbar-thumb{ background:rgba(255,158,196,.45);border-radius:999px; }
