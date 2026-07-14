@@ -254,8 +254,11 @@ function layoutPuzzle(img, level){
   //   그리드·미리보기(둘 다 object-fit:cover 4:3)와 프레이밍이 일치하고 조각도 정사각형에 가까움.
   const BOARD_ASPECT=4/3;
 
-  // 보드는 화면 왼쪽에, 오른쪽은 조각 트레이
-  const boardMaxW=areaW*0.56, boardMaxH=areaH*0.86;
+  // 보드는 화면 왼쪽에, 오른쪽은 조각 트레이.
+  // ⚠️ 조각수가 적으면 조각 하나가 커서, 보드가 넓으면 트레이가 조각 1개 폭밖에 안 남아
+  //    조각들이 한 줄로 포개진다(어린 아이가 못 집음). → 조각수 적을수록 보드를 좁혀 트레이 확보.
+  const bf = cols<=2 ? 0.40 : cols<=3 ? 0.42 : cols<=4 ? 0.50 : 0.52;
+  const boardMaxW=areaW*bf, boardMaxH=areaH*0.88;
   let boardW,boardH;
   if(boardMaxW/boardMaxH > BOARD_ASPECT){ boardH=boardMaxH; boardW=boardH*BOARD_ASPECT; }
   else { boardW=boardMaxW; boardH=boardW/BOARD_ASPECT; }
@@ -334,23 +337,30 @@ function layoutPuzzle(img, level){
   scheduleHint();   // 한동안 진전 없으면 힌트
 }
 
-/* 트레이 흩뿌림 위치 생성 (겹침 최소화하는 지터 그리드) */
+/* 트레이 배치: 조각을 트레이 영역 전체에 최대한 펼쳐 겹침을 최소화한다.
+   조각 비율을 고려해 열 수를 골라(가로/세로 노출이 균형) 격자로 벌려 놓고,
+   전부 화면 안에 들어오도록 클램프. 어린 아이가 조각 하나하나를 집을 수 있게. */
 function makeScatter(n, x0, y0, w, h, pw, ph, areaH){
-  const cols=Math.max(1, Math.floor(w/(pw*0.62)));
+  const pad=6, availH=areaH-pad*2;
+  // 균형 열 수: cols ≈ sqrt(n · (트레이가로/조각가로) · (조각세로/트레이세로))
+  let cols=Math.round(Math.sqrt(Math.max(1, n * (w/pw) * (ph/availH))));
+  cols=Math.max(1, Math.min(cols, n));
   const rows=Math.ceil(n/cols);
-  const cellW=w/cols, cellH=Math.min(h/rows, (areaH-y0-10)/rows);
+  const stepX = cols>1 ? Math.max(0, w-pw)/(cols-1) : 0;
+  const stepY = rows>1 ? Math.max(0, availH-ph)/(rows-1) : 0;
   const list=[];
   for(let i=0;i<n;i++){
     const cx=i%cols, cy=Math.floor(i/cols);
-    const jx=(Math.random()-0.5)*Math.max(0,cellW-pw)*0.8;
-    const jy=(Math.random()-0.5)*Math.max(0,cellH-ph)*0.6;
-    let x=x0+cx*cellW+(cellW-pw)/2+jx;
-    let y=y0+cy*cellH+(cellH-ph)/2+jy;
-    x=Math.max(x0-pw*0.15, Math.min(x, x0+w-pw*0.85));
-    y=Math.max(4, Math.min(y, areaH-ph-4));
+    let x = cols>1 ? x0+cx*stepX : x0+(w-pw)/2;
+    let y = rows>1 ? pad+cy*stepY : pad+(availH-ph)/2;
+    // 정돈된 느낌 유지하며 아주 작은 지터만
+    x += (Math.random()-0.5)*Math.min(stepX*0.12, 10);
+    y += (Math.random()-0.5)*Math.min(stepY*0.12, 10);
+    x=Math.max(x0, Math.min(x, x0+w-pw));      // 완전히 트레이/화면 안
+    y=Math.max(pad, Math.min(y, areaH-ph-pad));
     list.push({x,y});
   }
-  // 순서 섞기 (조각-트레이 대응이 뻔하지 않게)
+  // 순서 섞기 (조각-자리 대응이 뻔하지 않게)
   for(let i=list.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [list[i],list[j]]=[list[j],list[i]]; }
   return list;
 }
