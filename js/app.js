@@ -49,7 +49,7 @@ function grantPremium(days){
 }
 function canPlay(){ return isPremium() || playsLeft()>0; }
 
-/* ---------- 사운드 (파일 없이 WebAudio 생성) ---------- */
+/* ---------- 사운드 (파일 없이 WebAudio 생성) + 목소리 칭찬(브라우저 TTS) ---------- */
 const Sound = (function(){
   let ctx=null, on=LS.get('bp_sound',true);
   function ac(){ if(!ctx){ try{ ctx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } return ctx; }
@@ -63,10 +63,33 @@ const Sound = (function(){
     g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
     o.connect(g); g.connect(c.destination); o.start(t); o.stop(t+dur+0.02);
   }
+  /* 목소리 칭찬: 파일 없이 브라우저 SpeechSynthesis로 한국어를 밝게 말함.
+     아직 못 읽는 아이라 텍스트 대신 "귀로 듣는 칭찬"이 큰 보상이 됨. 소리토글로 같이 꺼짐. */
+  const WIN_PRAISE=['우와, 잘했어요!','정말 멋져요!','최고예요!','다 맞췄어요!','대단해요!','짱이에요!'];
+  const SNAP_PRAISE=['좋아요!','그렇지!','잘한다!','옳지!','좋았어!','오, 좋아요!'];
+  let lastSaid=0, koVoice=null, voiceReady=false;
+  function loadVoices(){ try{ const sy=window.speechSynthesis; if(!sy) return;
+    const vs=sy.getVoices(); if(vs&&vs.length){ koVoice=vs.find(v=>/ko/i.test(v.lang))||null; voiceReady=true; } }catch(e){} }
+  try{ if(window.speechSynthesis){ loadVoices(); window.speechSynthesis.onvoiceschanged=loadVoices; } }catch(e){}
+  function say(text){
+    if(!on) return; const sy=window.speechSynthesis; if(!sy) return;
+    try{
+      if(!voiceReady) loadVoices();
+      sy.cancel();                                   // 겹쳐 말하지 않게
+      const u=new SpeechSynthesisUtterance(text);
+      u.lang='ko-KR'; u.rate=1.02; u.pitch=1.3; u.volume=1;   // 밝고 귀엽게
+      if(koVoice) u.voice=koVoice;
+      sy.speak(u);
+    }catch(e){}
+  }
+  function rnd(a){ return a[Math.floor(Math.random()*a.length)]; }
   return {
-    setOn(v){ on=v; LS.set('bp_sound',v); },
+    setOn(v){ on=v; LS.set('bp_sound',v); if(!v){ try{ window.speechSynthesis&&window.speechSynthesis.cancel(); }catch(e){} } },
     isOn(){ return on; },
-    resume(){ const c=ac(); if(c&&c.state==='suspended') c.resume(); },
+    resume(){ const c=ac(); if(c&&c.state==='suspended') c.resume(); loadVoices(); },
+    sayWin(){ say(rnd(WIN_PRAISE)); },
+    // 조각 맞출 때 가끔만(너무 자주 말하면 시끄러움): 35% 확률·최소 1.8초 간격
+    sayEncourage(){ const now=Date.now(); if(Math.random()<0.35 && now-lastSaid>1800){ lastSaid=now; say(rnd(SNAP_PRAISE)); } },
     pick(){ tone(520,0.08,'sine',0.15); },              // 조각 집기
     snap(){ tone(660,0.10,'triangle',0.25); tone(990,0.10,'sine',0.15,0.05); }, // 착 붙음
     win(){ [523,659,784,1046].forEach((f,i)=>tone(f,0.35,'triangle',0.28,i*0.13)); }, // 팡파레
@@ -506,13 +529,17 @@ function trySnap(p){
     ],{duration:440,easing:'ease-out'});
     updateProgress();
     if(pieces.every(q=>q.locked)){ clearHintTimer(); setTimeout(winGame, 350); }
-    else scheduleHint();   // 한 조각 맞췄으니 힌트 타이머 리셋
+    else { Sound.sayEncourage(); scheduleHint(); }   // 가끔 칭찬 + 힌트 타이머 리셋
   }
 }
 
 function updateProgress(){
-  const done=pieces.filter(p=>p.locked).length;
-  $('#game-progress').textContent=`${done} / ${pieces.length}`;
+  const done=pieces.filter(p=>p.locked).length, total=pieces.length;
+  const pct=total?Math.round(done/total*100):0;
+  // 글 못 읽는 아이용: 채워지는 진행 막대(시각). 숫자는 부모용으로 작게 병기.
+  $('#game-progress').innerHTML=
+    `<span class="pbar"><span class="pfill" style="width:${pct}%"></span></span>`+
+    `<span class="pnum">${done}/${total}</span>`;
 }
 
 /* =========================================================
@@ -525,6 +552,7 @@ function winGame(){
   const stars=calcStars(level, sec);
   const isNew=saveBest(currentSrc, level.key, stars, sec);
   Sound.win();
+  setTimeout(()=>Sound.sayWin(), 450);   // 팡파레 살짝 뒤에 목소리 칭찬
   $('#win-photo').src=currentSrc;
   renderStars(stars);
   if(level.notime){
